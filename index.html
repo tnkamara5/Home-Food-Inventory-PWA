@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Inventory</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Food Inventory">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>🍎 Food Inventory</h1>
+            <button id="installBtn" class="install-btn" style="display: none;">Install App</button>
+        </header>
+
+        <nav class="category-nav">
+            <button class="category-btn active" data-category="all">All</button>
+            <button class="category-btn" data-category="produce">🥬 Produce</button>
+            <button class="category-btn" data-category="dairy">🥛 Dairy</button>
+            <button class="category-btn" data-category="meats">🥩 Meats</button>
+            <button class="category-btn" data-category="pantry">🥫 Pantry</button>
+            <button class="category-btn" data-category="frozen">❄️ Frozen</button>
+            <button class="category-btn" data-category="other">📦 Other</button>
+        </nav>
+
+        <div class="add-item-section">
+            <button id="toggleFormBtn" class="toggle-form-btn">+ Add Food Item</button>
+            
+            <form id="addItemForm" class="add-form hidden">
+                <div class="form-group">
+                    <label for="itemName">Food Name</label>
+                    <input type="text" id="itemName" required placeholder="e.g., Milk, Apples, Chicken">
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemQuantity">Quantity</label>
+                    <input type="text" id="itemQuantity" required placeholder="e.g., 1 gallon, 2 lbs, 5 pieces">
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemExpiry">Expiry Date</label>
+                    <input type="date" id="itemExpiry" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="itemCategory">Category</label>
+                    <select id="itemCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="produce">🥬 Produce</option>
+                        <option value="dairy">🥛 Dairy</option>
+                        <option value="meats">🥩 Meats</option>
+                        <option value="pantry">🥫 Pantry</option>
+                        <option value="frozen">❄️ Frozen</option>
+                        <option value="other">📦 Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="button" id="scanBarcodeBtn" class="scan-btn">📷 Scan Barcode</button>
+                    <button type="submit" class="submit-btn">Add Item</button>
+                    <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="barcode-scanner hidden" id="barcodeScanner">
+            <div class="scanner-header">
+                <h3>Scan Barcode</h3>
+                <button id="closeScannerBtn" class="close-scanner">✕</button>
+            </div>
+            <video id="scannerVideo" autoplay></video>
+            <div class="scanner-overlay">
+                <div class="scanner-line"></div>
+            </div>
+            <p class="scanner-instructions">Position barcode within the frame</p>
+            <button id="manualEntryBtn" class="manual-entry-btn">Enter Manually Instead</button>
+        </div>
+
+        <div class="inventory-section">
+            <div class="inventory-header">
+                <h2 id="categoryTitle">All Items</h2>
+                <div class="inventory-stats">
+                    <span id="itemCount">0 items</span>
+                    <span id="expiringCount" class="expiring-count hidden">0 expiring soon</span>
+                </div>
+            </div>
+            
+            <div class="inventory-list" id="inventoryList">
+                <div class="empty-state" id="emptyState">
+                    <p>No food items yet. Add your first item!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="edit-modal hidden" id="editModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Edit Item</h3>
+                    <button id="closeModalBtn" class="close-modal">✕</button>
+                </div>
+                <form id="editItemForm">
+                    <input type="hidden" id="editItemId">
+                    
+                    <div class="form-group">
+                        <label for="editItemName">Food Name</label>
+                        <input type="text" id="editItemName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editItemQuantity">Quantity</label>
+                        <input type="text" id="editItemQuantity" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editItemExpiry">Expiry Date</label>
+                        <input type="date" id="editItemExpiry" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editItemCategory">Category</label>
+                        <select id="editItemCategory" required>
+                            <option value="produce">🥬 Produce</option>
+                            <option value="dairy">🥛 Dairy</option>
+                            <option value="meats">🥩 Meats</option>
+                            <option value="pantry">🥫 Pantry</option>
+                            <option value="frozen">❄️ Frozen</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button type="submit" class="save-btn">Save Changes</button>
+                        <button type="button" id="deleteItemBtn" class="delete-btn">Delete Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

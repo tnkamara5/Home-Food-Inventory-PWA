@@ -1,0 +1,605 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.app {
+    max-width: 100%;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.install-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Category Navigation */
+.category-nav {
+    background: white;
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.category-btn {
+    background: #f0f0f0;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    min-height: 44px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.category-btn:hover {
+    background: #e0e0e0;
+}
+
+.category-btn.active {
+    background: #2196F3;
+    color: white;
+}
+
+.category-btn[data-category="produce"].active {
+    background: #4CAF50;
+}
+
+.category-btn[data-category="dairy"].active {
+    background: #FF9800;
+}
+
+.category-btn[data-category="meats"].active {
+    background: #F44336;
+}
+
+.category-btn[data-category="pantry"].active {
+    background: #9C27B0;
+}
+
+.category-btn[data-category="frozen"].active {
+    background: #00BCD4;
+}
+
+.category-btn[data-category="other"].active {
+    background: #607D8B;
+}
+
+/* Add Item Section */
+.add-item-section {
+    background: white;
+    margin: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.toggle-form-btn {
+    width: 100%;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.add-form {
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.add-form.hidden {
+    display: none;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    min-height: 44px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.form-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.scan-btn,
+.submit-btn,
+.cancel-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.scan-btn {
+    background: #FF9800;
+    color: white;
+}
+
+.submit-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.cancel-btn {
+    background: #f0f0f0;
+    color: #666;
+}
+
+/* Barcode Scanner */
+.barcode-scanner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.barcode-scanner.hidden {
+    display: none;
+}
+
+.scanner-header {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-scanner {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+#scannerVideo {
+    flex: 1;
+    width: 100%;
+    object-fit: cover;
+}
+
+.scanner-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 250px;
+    height: 150px;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.scanner-line {
+    width: 100%;
+    height: 2px;
+    background: #4CAF50;
+    position: absolute;
+    top: 50%;
+    animation: scanLine 2s linear infinite;
+}
+
+@keyframes scanLine {
+    0%, 100% { top: 0; }
+    50% { top: calc(100% - 2px); }
+}
+
+.scanner-instructions {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.manual-entry-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+/* Inventory Section */
+.inventory-section {
+    margin: 1rem;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.inventory-header h2 {
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.inventory-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.expiring-count {
+    color: #FF9800;
+    font-weight: 600;
+}
+
+.expiring-count.hidden {
+    display: none;
+}
+
+.inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+    font-style: italic;
+}
+
+.food-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border-left: 4px solid #ddd;
+}
+
+.food-item:hover {
+    transform: translateY(-2px);
+}
+
+.food-item.category-produce {
+    border-left-color: #4CAF50;
+}
+
+.food-item.category-dairy {
+    border-left-color: #FF9800;
+}
+
+.food-item.category-meats {
+    border-left-color: #F44336;
+}
+
+.food-item.category-pantry {
+    border-left-color: #9C27B0;
+}
+
+.food-item.category-frozen {
+    border-left-color: #00BCD4;
+}
+
+.food-item.category-other {
+    border-left-color: #607D8B;
+}
+
+.food-item.expired {
+    background: #ffebee;
+    border-left-color: #F44336;
+}
+
+.food-item.expiring-soon {
+    background: #fff8e1;
+    border-left-color: #FF9800;
+}
+
+.food-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.food-item-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.category-badge {
+    background: #f0f0f0;
+    color: #666;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.category-badge.category-produce {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.category-badge.category-dairy {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.category-badge.category-meats {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.category-badge.category-pantry {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.category-badge.category-frozen {
+    background: #e0f2f1;
+    color: #00695c;
+}
+
+.category-badge.category-other {
+    background: #eceff1;
+    color: #455a64;
+}
+
+.food-item-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.expiry-date {
+    font-weight: 600;
+}
+
+.expiry-date.expired {
+    color: #F44336;
+}
+
+.expiry-date.expiring-soon {
+    color: #FF9800;
+}
+
+/* Edit Modal */
+.edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.edit-modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+}
+
+.save-btn,
+.delete-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.save-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.delete-btn {
+    background: #F44336;
+    color: white;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .header {
+        padding: 0.75rem;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .category-nav {
+        padding: 0.75rem;
+    }
+    
+    .category-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+    }
+    
+    .scan-btn,
+    .submit-btn,
+    .cancel-btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .food-item-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .category-badge {
+        align-self: flex-start;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .save-btn,
+    .delete-btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Touch and Accessibility */
+@media (hover: none) {
+    .food-item:hover {
+        transform: none;
+    }
+}
+
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid #2196F3;
+    outline-offset: 2px;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
