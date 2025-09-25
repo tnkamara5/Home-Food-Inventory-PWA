@@ -382,15 +382,32 @@ class FoodInventoryApp {
             scanner.classList.remove('hidden');
             this.isScanning = true;
             
-            // Initialize QuaggaJS
+            // First, manually get the camera stream to ensure it works on mobile Safari
+            this.scannerStream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 640, max: 1280 },
+                    height: { ideal: 480, max: 720 }
+                }
+            });
+            
+            // Set the stream to the video element
+            video.srcObject = this.scannerStream;
+            
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                video.onloadedmetadata = resolve;
+            });
+            
+            // Initialize QuaggaJS with the video element that now has a stream
             Quagga.init({
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
                     target: video,
                     constraints: {
-                        width: 640,
-                        height: 480,
+                        width: video.videoWidth || 640,
+                        height: video.videoHeight || 480,
                         facingMode: "environment"
                     }
                 },
@@ -434,6 +451,7 @@ class FoodInventoryApp {
 
     stopBarcodeScanner() {
         const scanner = document.getElementById('barcodeScanner');
+        const video = document.getElementById('scannerVideo');
         
         this.isScanning = false;
         scanner.classList.add('hidden');
@@ -442,6 +460,15 @@ class FoodInventoryApp {
         if (typeof Quagga !== 'undefined') {
             Quagga.stop();
         }
+        
+        // Stop the camera stream
+        if (this.scannerStream) {
+            this.scannerStream.getTracks().forEach(track => track.stop());
+            this.scannerStream = null;
+        }
+        
+        // Clear video source
+        video.srcObject = null;
     }
 
     async onBarcodeDetected(result) {
