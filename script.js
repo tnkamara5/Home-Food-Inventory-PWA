@@ -399,6 +399,16 @@ class FoodInventoryApp {
                 video.onloadedmetadata = resolve;
             });
             
+            // Force video to play on mobile
+            try {
+                await video.play();
+            } catch (playError) {
+                console.warn('Video autoplay failed:', playError);
+                // Try without audio
+                video.muted = true;
+                await video.play();
+            }
+            
             // Initialize QuaggaJS with the video element that now has a stream
             Quagga.init({
                 inputStream: {
