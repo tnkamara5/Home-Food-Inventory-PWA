@@ -181,8 +181,13 @@ class FoodInventoryApp {
 
         this.foodItems.push(newItem);
         this.saveDataToStorage();
-        this.renderInventory();
-        this.updateStats();
+        
+        // Force UI update immediately
+        setTimeout(() => {
+            this.renderInventory();
+            this.updateStats();
+        }, 0);
+        
         this.hideAddForm();
 
         // Show success message
@@ -229,8 +234,13 @@ class FoodInventoryApp {
         };
 
         this.saveDataToStorage();
-        this.renderInventory();
-        this.updateStats();
+        
+        // Force UI update immediately
+        setTimeout(() => {
+            this.renderInventory();
+            this.updateStats();
+        }, 0);
+        
         this.hideEditModal();
 
         this.showToast(`Updated ${name}`);
@@ -240,13 +250,19 @@ class FoodInventoryApp {
         if (!this.editingItem) return;
 
         if (confirm(`Delete ${this.editingItem.name}?`)) {
+            const itemName = this.editingItem.name;
             this.foodItems = this.foodItems.filter(i => i.id !== this.editingItem.id);
             this.saveDataToStorage();
-            this.renderInventory();
-            this.updateStats();
+            
+            // Force UI update immediately
+            setTimeout(() => {
+                this.renderInventory();
+                this.updateStats();
+            }, 0);
+            
             this.hideEditModal();
 
-            this.showToast(`Deleted ${this.editingItem.name}`);
+            this.showToast(`Deleted ${itemName}`);
         }
     }
 
@@ -508,10 +524,14 @@ class FoodInventoryApp {
             if (product) {
                 const productName = this.sanitizeString(product.product_name || 'Unknown Product');
                 const category = this.mapCategoryFromAPI(product.categories_tags || []);
+                const containerSize = product.container_size || '';
                 
-                if (confirm(`Found: ${productName}\nAdd to inventory?`)) {
+                if (confirm(`Found: ${productName}${containerSize ? ` (${containerSize})` : ''}\nAdd to inventory?`)) {
                     document.getElementById('itemName').value = productName;
                     document.getElementById('itemCategory').value = category;
+                    if (containerSize) {
+                        document.getElementById('itemQuantity').value = containerSize;
+                    }
                     this.showAddForm();
                 }
             } else {
@@ -576,6 +596,7 @@ class FoodInventoryApp {
             return {
                 product_name: data.product.product_name,
                 categories_tags: data.product.categories_tags,
+                container_size: this.extractContainerSize(data.product.product_name, data.product.quantity),
                 source: 'Open Food Facts'
             };
         }
@@ -594,6 +615,7 @@ class FoodInventoryApp {
             return {
                 product_name: item.title,
                 categories_tags: this.categorizeBrandAndTitle(item.brand, item.title),
+                container_size: this.extractContainerSize(item.title, item.size),
                 source: 'UPC Database'
             };
         }
@@ -634,6 +656,81 @@ class FoodInventoryApp {
         }
         
         return categories.length > 0 ? categories : ['en:unknown'];
+    }
+    
+    extractContainerSize(productName, quantity) {
+        // Try to extract container size from product name or quantity field
+        const text = `${productName || ''} ${quantity || ''}`.toLowerCase();
+        
+        // Common size patterns
+        const sizePatterns = [
+            // Fluid ounces
+            /(\d+(?:\.\d+)?)\s*fl\.?\s*oz/i,
+            /(\d+(?:\.\d+)?)\s*fluid\s*ounce/i,
+            
+            // Regular ounces
+            /(\d+(?:\.\d+)?)\s*oz(?![a-z])/i,
+            /(\d+(?:\.\d+)?)\s*ounce/i,
+            
+            // Pounds
+            /(\d+(?:\.\d+)?)\s*lbs?/i,
+            /(\d+(?:\.\d+)?)\s*pounds?/i,
+            
+            // Grams
+            /(\d+(?:\.\d+)?)\s*g(?![a-z])/i,
+            /(\d+(?:\.\d+)?)\s*grams?/i,
+            
+            // Kilograms
+            /(\d+(?:\.\d+)?)\s*kg/i,
+            /(\d+(?:\.\d+)?)\s*kilograms?/i,
+            
+            // Milliliters
+            /(\d+(?:\.\d+)?)\s*ml/i,
+            /(\d+(?:\.\d+)?)\s*milliliters?/i,
+            
+            // Liters
+            /(\d+(?:\.\d+)?)\s*l(?![a-z])/i,
+            /(\d+(?:\.\d+)?)\s*liters?/i,
+            /(\d+(?:\.\d+)?)\s*litres?/i,
+            
+            // Count/pieces
+            /(\d+)\s*count/i,
+            /(\d+)\s*ct/i,
+            /(\d+)\s*pack/i,
+            /(\d+)\s*pieces?/i,
+            /(\d+)\s*pc/i
+        ];
+        
+        // Try each pattern
+        for (const pattern of sizePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                const number = match[1];
+                const unit = this.normalizeUnit(match[0]);
+                return `${number} ${unit}`;
+            }
+        }
+        
+        // If no pattern matches, return empty string
+        return '';
+    }
+    
+    normalizeUnit(matchedText) {
+        const text = matchedText.toLowerCase();
+        
+        // Normalize units to consistent format
+        if (text.includes('fl') || text.includes('fluid')) return 'fl oz';
+        if (text.includes('oz') || text.includes('ounce')) return 'oz';
+        if (text.includes('lb') || text.includes('pound')) return 'lbs';
+        if (text.includes('kg') || text.includes('kilogram')) return 'kg';
+        if (text.includes('gram') && !text.includes('kilogram')) return 'g';
+        if (text.includes('ml') || text.includes('milliliter')) return 'ml';
+        if (text.includes('liter') || text.includes('litre')) return 'L';
+        if (text.includes('count') || text.includes('ct')) return 'count';
+        if (text.includes('pack')) return 'pack';
+        if (text.includes('piece') || text.includes('pc')) return 'pieces';
+        
+        return 'units'; // fallback
     }
     
     sanitizeString(str) {
