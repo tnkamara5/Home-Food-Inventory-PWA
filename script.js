@@ -380,26 +380,50 @@ class FoodInventoryApp {
             const video = document.getElementById('scannerVideo');
             
             scanner.classList.remove('hidden');
-            
-            // Request camera permission
-            this.scannerStream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            });
-            
-            video.srcObject = this.scannerStream;
             this.isScanning = true;
             
-            // Note: Real barcode scanning would require a library like QuaggaJS or ZXing
-            // For now, we'll simulate it with a timeout
-            setTimeout(() => {
-                if (this.isScanning) {
-                    this.simulateBarcodeDetection();
+            // Initialize QuaggaJS
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: video,
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment"
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader"
+                    ]
+                },
+                locate: true,
+                locator: {
+                    halfSample: true,
+                    patchSize: "medium"
                 }
-            }, 3000);
+            }, (err) => {
+                if (err) {
+                    console.error('QuaggaJS initialization error:', err);
+                    alert('Camera initialization failed. Please try again.');
+                    this.stopBarcodeScanner();
+                    return;
+                }
+                Quagga.start();
+                
+                // Set up barcode detection
+                Quagga.onDetected(this.onBarcodeDetected.bind(this));
+            });
             
         } catch (error) {
             console.error('Camera access denied:', error);
@@ -410,38 +434,146 @@ class FoodInventoryApp {
 
     stopBarcodeScanner() {
         const scanner = document.getElementById('barcodeScanner');
-        const video = document.getElementById('scannerVideo');
         
         this.isScanning = false;
         scanner.classList.add('hidden');
         
-        if (this.scannerStream) {
-            this.scannerStream.getTracks().forEach(track => track.stop());
-            this.scannerStream = null;
+        // Stop QuaggaJS
+        if (typeof Quagga !== 'undefined') {
+            Quagga.stop();
         }
-        
-        video.srcObject = null;
     }
 
-    simulateBarcodeDetection() {
-        // Simulate finding a barcode
-        const sampleProducts = [
-            { name: 'Organic Bananas', category: 'produce' },
-            { name: 'Whole Milk', category: 'dairy' },
-            { name: 'Ground Beef', category: 'meats' },
-            { name: 'Pasta Sauce', category: 'pantry' },
-            { name: 'Frozen Peas', category: 'frozen' }
-        ];
+    async onBarcodeDetected(result) {
+        if (!this.isScanning) return;
         
-        const randomProduct = sampleProducts[Math.floor(Math.random() * sampleProducts.length)];
+        const barcode = result.codeResult.code;
+        console.log('Barcode detected:', barcode);
         
-        if (confirm(`Found: ${randomProduct.name}\nAdd to inventory?`)) {
-            document.getElementById('itemName').value = randomProduct.name;
-            document.getElementById('itemCategory').value = randomProduct.category;
-            this.showAddForm();
+        // Stop scanning immediately after detection
+        this.stopBarcodeScanner();
+        
+        // Show loading message
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'loading-overlay';
+        loadingMsg.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Looking up product...</p>
+            </div>
+        `;
+        document.body.appendChild(loadingMsg);
+        
+        try {
+            // Lookup product using Open Food Facts API
+            const product = await this.lookupProduct(barcode);
+            
+            if (product) {
+                const productName = this.sanitizeString(product.product_name || 'Unknown Product');
+                const category = this.mapCategoryFromAPI(product.categories_tags || []);
+                
+                if (confirm(`Found: ${productName}\nAdd to inventory?`)) {
+                    document.getElementById('itemName').value = productName;
+                    document.getElementById('itemCategory').value = category;
+                    this.showAddForm();
+                }
+            } else {
+                if (confirm(`Product not found in database.\nWould you like to add it manually?`)) {
+                    this.showAddForm();
+                }
+            }
+        } catch (error) {
+            console.error('Product lookup failed:', error);
+            if (confirm(`Could not lookup product.\nWould you like to add it manually?`)) {
+                this.showAddForm();
+            }
+        } finally {
+            // Remove loading message
+            document.body.removeChild(loadingMsg);
+        }
+    }
+    
+    async lookupProduct(barcode) {
+        const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.status === 1 && data.product) {
+                return data.product;
+            }
+            return null;
+        } catch (error) {
+            console.error('API request failed:', error);
+            throw error;
+        }
+    }
+    
+    sanitizeString(str) {
+        if (!str) return 'Unknown Product';
+        // Basic sanitization to prevent XSS
+        return str.replace(/[<>'"&]/g, function(match) {
+            const escapeMap = {
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#x27;',
+                '&': '&amp;'
+            };
+            return escapeMap[match];
+        }).substring(0, 100); // Limit length
+    }
+    
+    mapCategoryFromAPI(categoriesTags) {
+        if (!categoriesTags || !Array.isArray(categoriesTags)) return 'other';
+        
+        const categoryMap = {
+            'meat': 'meats',
+            'beef': 'meats',
+            'pork': 'meats',
+            'chicken': 'meats',
+            'poultry': 'meats',
+            'fish': 'meats',
+            'seafood': 'meats',
+            'dairy': 'dairy',
+            'milk': 'dairy',
+            'cheese': 'dairy',
+            'yogurt': 'dairy',
+            'fruit': 'produce',
+            'vegetable': 'produce',
+            'produce': 'produce',
+            'frozen': 'frozen',
+            'beverage': 'other',
+            'snack': 'pantry',
+            'condiment': 'pantry',
+            'sauce': 'pantry',
+            'spice': 'pantry',
+            'seasoning': 'pantry',
+            'pickled': 'pantry',
+            'pickle': 'pantry',
+            'ginger': 'pantry',
+            'canned': 'pantry',
+            'jarred': 'pantry',
+            'preserved': 'pantry',
+            'pasta': 'pantry',
+            'rice': 'pantry',
+            'cereal': 'pantry',
+            'bread': 'pantry',
+            'bakery': 'pantry'
+        };
+        
+        // Check categories for matches
+        for (const tag of categoriesTags) {
+            const category = tag.toLowerCase().replace(/^en:/, '');
+            for (const [key, value] of Object.entries(categoryMap)) {
+                if (category.includes(key)) {
+                    return value;
+                }
+            }
         }
         
-        this.stopBarcodeScanner();
+        return 'other';
     }
 
     // PWA functionality
