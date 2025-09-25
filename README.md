@@ -14,7 +14,7 @@ A mobile-first Progressive Web App for tracking your kitchen food inventory with
 
 ## Live Demo 🚀
 
-Visit: https://tnkamara5.github.io/Home-Food-Inventory-PWA/`
+Visit: https://tnkamara5.github.io/Home-Food-Inventory-PWA/
 
 ## Installation 📲
 
