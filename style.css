@@ -258,6 +258,7 @@ body {
     border: 2px solid #4CAF50;
     border-radius: 8px;
     pointer-events: none;
+    z-index: 10;
 }
 
 .scanner-line {
@@ -280,6 +281,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     color: white;
+    z-index: 10;
     text-align: center;
     padding: 0 1rem;
 }
