@@ -531,20 +531,109 @@ class FoodInventoryApp {
     }
     
     async lookupProduct(barcode) {
+        // Try multiple APIs in sequence for better coverage
+        const apis = [
+            {
+                name: 'Open Food Facts',
+                lookup: () => this.lookupOpenFoodFacts(barcode)
+            },
+            {
+                name: 'UPC Database',
+                lookup: () => this.lookupUPCDatabase(barcode)
+            },
+            {
+                name: 'Barcode Spider',
+                lookup: () => this.lookupBarcodeSpider(barcode)
+            }
+        ];
+        
+        for (const api of apis) {
+            try {
+                console.log(`Trying ${api.name}...`);
+                const product = await api.lookup();
+                if (product) {
+                    console.log(`Found product in ${api.name}`);
+                    return product;
+                }
+            } catch (error) {
+                console.warn(`${api.name} failed:`, error.message);
+                continue; // Try next API
+            }
+        }
+        
+        console.log('No product found in any database');
+        return null;
+    }
+    
+    async lookupOpenFoodFacts(barcode) {
         const url = `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`;
         
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.status === 1 && data.product) {
-                return data.product;
-            }
-            return null;
-        } catch (error) {
-            console.error('API request failed:', error);
-            throw error;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 1 && data.product) {
+            // Normalize to common format
+            return {
+                product_name: data.product.product_name,
+                categories_tags: data.product.categories_tags,
+                source: 'Open Food Facts'
+            };
         }
+        return null;
+    }
+    
+    async lookupUPCDatabase(barcode) {
+        const url = `https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.code === 'OK' && data.items && data.items.length > 0) {
+            const item = data.items[0];
+            // Normalize to common format
+            return {
+                product_name: item.title,
+                categories_tags: this.categorizeBrandAndTitle(item.brand, item.title),
+                source: 'UPC Database'
+            };
+        }
+        return null;
+    }
+    
+    async lookupBarcodeSpider(barcode) {
+        // Note: Barcode Spider requires API key, so we'll skip it for now
+        // Users can add their own API key if they want this service
+        console.log('Barcode Spider skipped (requires API key)');
+        return null;
+    }
+    
+    categorizeBrandAndTitle(brand, title) {
+        // Create category tags from brand and title for non-Open Food Facts APIs
+        const text = `${brand || ''} ${title || ''}`.toLowerCase();
+        const categories = [];
+        
+        // Food category detection
+        if (text.match(/sauce|sriracha|ketchup|mustard|mayo|dressing/)) {
+            categories.push('en:condiments');
+        } else if (text.match(/spice|seasoning|pepper|salt|garlic/)) {
+            categories.push('en:spices');
+        } else if (text.match(/snack|chip|cracker|cookie/)) {
+            categories.push('en:snacks');
+        } else if (text.match(/cereal|oat|granola/)) {
+            categories.push('en:cereals');
+        } else if (text.match(/pasta|noodle|spaghetti/)) {
+            categories.push('en:pasta');
+        } else if (text.match(/soup|broth|stock/)) {
+            categories.push('en:soups');
+        } else if (text.match(/rice|grain|quinoa/)) {
+            categories.push('en:grains');
+        } else if (text.match(/oil|vinegar|cooking/)) {
+            categories.push('en:cooking-aids');
+        } else if (text.match(/bean|lentil|chickpea/)) {
+            categories.push('en:legumes');
+        }
+        
+        return categories.length > 0 ? categories : ['en:unknown'];
     }
     
     sanitizeString(str) {
